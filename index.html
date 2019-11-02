@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>videoctx-testcase-gc</title>
+</head>
+<body>
+    <canvas id="cv"></canvas>
+    <button onclick="addVideo()">Load video(s)</button>
+    <div class="videos"></div>
+
+    <script>
+        "use strict";
+
+        const dialog = require('electron').remote.dialog;
+        const VideoContext = require("videocontext");
+
+        let videoCtx;
+        let currentNode;
+        const crossfadeDuration = 2;
+
+        (function() {
+            videoCtx = new VideoContext(document.querySelector("#cv"));
+            currentNode = videoCtx.image("test.gif");
+            currentNode.start(0);
+            currentNode.connect(videoCtx.destination);
+            videoCtx.play();
+
+        })();
+
+        
+
+        function addVideo() {
+            dialog.showOpenDialog({ properties: ['openFile', 'multiSelections'] }).then(result => {
+            if (!result.canceled) {
+                result.filePaths.forEach(function (p) {
+                    document.querySelector(".videos").innerHTML += "<div class='video'>"+p+"</div><button class='play' data-path='"+p+"'>Play</button>";
+
+                    var elements = document.getElementsByClassName("play");
+
+                    var playVideo = function() {
+                        var path = this.getAttribute("data-path");
+
+                        const newNode = videoCtx.video(path);
+                        newNode.start(0);
+
+                        const crossFade = videoCtx.transition(VideoContext.DEFINITIONS.CROSSFADE);
+                        crossFade.transition(videoCtx.currentTime,
+                        videoCtx.currentTime + crossfadeDuration, 0.0, 1.0, "mix");
+
+                        currentNode.connect(crossFade);
+                        newNode.connect(crossFade);
+                        crossFade.connect(videoCtx.destination);
+
+                        setTimeout(() => {
+                        /* console.log(videoCtx);
+                        currentNode.disconnect(); */
+                        currentNode = newNode;
+                        }, (crossfadeDuration + 1) * 1000);
+
+                    };
+
+                    Array.from(elements).forEach(function(element) {
+                        element.addEventListener('click', playVideo);
+                    });
+
+                });
+            }
+            })
+        }
+
+
+    </script>
+</body>
+</html>
