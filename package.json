@@ -9,6 +9,6 @@
     "electron": "^7.0.1"
   },
   "dependencies": {
-    "videocontext": "^0.53.1"
+    "videocontext": "^0.54.0"
   }
 }
